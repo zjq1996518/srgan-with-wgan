@@ -55,6 +55,13 @@ class SRGAN(object):
         self.vgg_model = self.build_vgg_model()
         self.model = self.build_srgan()
 
+        self.LOG_PATH = '../../log/train.log'
+        self.DATA_PATH = '../../data'
+        self.WEIGHT_PATH = '../../weight'
+
+        self.epochs = 2
+        self.batch = 1
+
     def wasserstein_loss(self, y_true, y_pred):
         return K.mean(y_true * y_pred)
 
@@ -148,11 +155,11 @@ class SRGAN(object):
 
         return model
 
-    def get_train_data(self, batch=1):
+    def get_train_data(self):
 
         files = None
         root = None
-        for _root, dirs, _files in os.walk('../data'):
+        for _root, dirs, _files in os.walk(self.DATA_PATH):
             files = _files
             root = _root
 
@@ -179,7 +186,7 @@ class SRGAN(object):
             x_train.append(img)
             x_resize.append(img_resize)
 
-            if len(x_train) == batch:
+            if len(x_train) == self.batch:
                 x_train = np.array(x_train) / (255 / 2) - 1
                 x_resize = np.array(x_resize) / (255 / 2) - 1
 
@@ -191,14 +198,12 @@ class SRGAN(object):
     def train(self):
 
         should_exit = 0
-        epochs = 2
-        log_path = '../data/train.log'
 
         # 将训练信息记录到日志
-        if os.path.exists(log_path):
-            os.remove(log_path)
+        if os.path.exists(self.LOG_PATH):
+            os.remove(self.LOG_PATH)
 
-        for t in range(epochs):
+        for t in range(self.epochs):
             if should_exit == 1:
                 break
             data_generator = self.get_train_data()
@@ -223,7 +228,7 @@ class SRGAN(object):
                         weights = [np.clip(w, -0.01, 0.01) for w in weights]
                         l.set_weights(weights)
 
-                    with open(log_path, 'a', encoding='utf-8') as file:
+                    with open(self.LOG_PATH, 'a', encoding='utf-8') as file:
                         file.write(f'epoch {t} 第{i}个batch,生成器损失： {combine_loss} 判别器损失: {(d_loss_valid + d_loss_fake) / 2}\n')
 
                     # 每 2000 保存一次生成样本
@@ -233,9 +238,9 @@ class SRGAN(object):
 
                     # 每训练1000个batch保存权重
                     if i % 1000 == 0:
-                        self.discriminator.save_weights('../weight/discriminator_{i}.w')
-                        self.generator.save_weights('../weight/generator_{i}.w')
+                        self.discriminator.save_weights(f'{self.WEIGHT_PATH}/discriminator_{i}.w')
+                        self.generator.save_weights(f'{self.WEIGHT_PATH}/generator_{i}.w')
 
                 except:
-                    with open(log_path, 'a', encoding='utf-8') as file:
+                    with open(self.LOG_PATH, 'a', encoding='utf-8') as file:
                         file.write('第{i}batch数据太大跳过\n')
