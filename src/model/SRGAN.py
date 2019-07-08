@@ -48,16 +48,16 @@ class SRGAN(object):
     SRGAN 模型
     """
 
-    def __init__(self):
+    def __init__(self, log_path='../../log/train.log', data_path='../../data', weight_path='../../weight'):
 
         self.generator = self.build_generator()
         self.discriminator = self.build_discriminator()
         self.vgg_model = self.build_vgg_model()
         self.model = self.build_srgan()
 
-        self.LOG_PATH = '../../log/train.log'
-        self.DATA_PATH = '../../data'
-        self.WEIGHT_PATH = '../../weight'
+        self.LOG_PATH = log_path
+        self.DATA_PATH = data_path
+        self.WEIGHT_PATH = weight_path
 
         self.epochs = 2
         self.batch = 1
@@ -167,7 +167,6 @@ class SRGAN(object):
         x_resize = []
 
         for file in files:
-
             # 将opencv 读取图片转换为 rgb
             img = cv2.imread(os.path.join(root, file))[:, :, [2, 1, 0]]
 
@@ -181,7 +180,8 @@ class SRGAN(object):
             if shape[0] % 2 != 0:
                 img = cv2.resize(img, (shape[1], shape[0] - 1))
 
-            img_resize = cv2.resize(img, (shape[1] // 2, shape[0] // 2))
+            img_resize = cv2.resize(img, (shape[1] // 4, shape[0] // 4))
+            img_resize = cv2.resize(img_resize, (shape[1] // 2, shape[0] // 2))
 
             x_train.append(img)
             x_resize.append(img_resize)
